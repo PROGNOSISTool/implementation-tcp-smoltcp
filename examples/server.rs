@@ -2,10 +2,9 @@ mod utils;
 
 use log::debug;
 use std::fmt::Write;
-use std::os::unix::io::AsRawFd;
 
 use smoltcp::iface::{Config, Interface, SocketSet};
-use smoltcp::phy::{wait as phy_wait, Device, Medium};
+use smoltcp::phy::{wait as phy_wait, Medium};
 use smoltcp::socket::{tcp, udp};
 use smoltcp::time::{Duration, Instant};
 use smoltcp::wire::{EthernetAddress, IpAddress, IpCidr, Ipv4Address};
@@ -79,7 +78,7 @@ fn main() {
     let tcp3_handle = sockets.add(tcp3_socket);
     let tcp4_handle = sockets.add(tcp4_socket);
 
-    let mut tcp_4433_active = false;
+    let mut tcp_44344_active = false;
     loop {
         let timestamp = Instant::now();
         iface.poll(timestamp, &mut device, &mut sockets);
@@ -117,18 +116,18 @@ fn main() {
             socket.close();
         }
 
-        // tcp:4433: echo with reverse
+        // tcp:44344: echo with reverse
         let socket = sockets.get_mut::<tcp::Socket>(tcp2_handle);
         if !socket.is_open() {
-            socket.listen(4433).unwrap()
+            socket.listen(44344).unwrap()
         }
 
-        if socket.is_active() && !tcp_4433_active {
-            debug!("tcp:4433 connected");
-        } else if !socket.is_active() && tcp_4433_active {
-            debug!("tcp:4433 disconnected");
+        if socket.is_active() && !tcp_44344_active {
+            debug!("tcp:44344 connected");
+        } else if !socket.is_active() && tcp_44344_active {
+            debug!("tcp:44344 disconnected");
         }
-        tcp_4433_active = socket.is_active();
+        tcp_44344_active = socket.is_active();
 
         if socket.may_recv() {
             let data = socket
@@ -136,7 +135,7 @@ fn main() {
                     let recvd_len = buffer.len();
                     let mut data = buffer.to_owned();
                     if !data.is_empty() {
-                        debug!("tcp:4433 recv data: {:?}", data);
+                        debug!("tcp:44344 recv data: {:?}", data);
                         data = data.split(|&b| b == b'\n').collect::<Vec<_>>().concat();
                         data.reverse();
                         data.extend(b"\n");
@@ -145,11 +144,11 @@ fn main() {
                 })
                 .unwrap();
             if socket.can_send() && !data.is_empty() {
-                debug!("tcp:4433 send data: {:?}", data);
+                debug!("tcp:44344 send data: {:?}", data);
                 socket.send_slice(&data[..]).unwrap();
             }
         } else if socket.may_send() {
-            debug!("tcp:4433 close");
+            debug!("tcp:44344 close");
             socket.close();
         }
 
