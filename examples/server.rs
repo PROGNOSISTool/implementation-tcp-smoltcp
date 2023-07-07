@@ -8,7 +8,7 @@ use smoltcp::iface::{Config, Interface, SocketSet};
 use smoltcp::phy::{wait as phy_wait, Device, Medium};
 use smoltcp::socket::{tcp, udp};
 use smoltcp::time::{Duration, Instant};
-use smoltcp::wire::{EthernetAddress, IpAddress, IpCidr, Ipv4Address, Ipv6Address};
+use smoltcp::wire::{EthernetAddress, IpAddress, IpCidr, Ipv4Address};
 
 fn main() {
     utils::setup_logging("");
@@ -39,20 +39,10 @@ fn main() {
         ip_addrs
             .push(IpCidr::new(IpAddress::v4(192, 168, 69, 1), 24))
             .unwrap();
-        ip_addrs
-            .push(IpCidr::new(IpAddress::v6(0xfdaa, 0, 0, 0, 0, 0, 0, 1), 64))
-            .unwrap();
-        ip_addrs
-            .push(IpCidr::new(IpAddress::v6(0xfe80, 0, 0, 0, 0, 0, 0, 1), 64))
-            .unwrap();
     });
     iface
         .routes_mut()
         .add_default_ipv4_route(Ipv4Address::new(192, 168, 69, 100))
-        .unwrap();
-    iface
-        .routes_mut()
-        .add_default_ipv6_route(Ipv6Address::new(0xfe80, 0, 0, 0, 0, 0, 0, 0x100))
         .unwrap();
 
     // Create sockets
