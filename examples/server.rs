@@ -2,6 +2,7 @@ mod utils;
 
 use log::debug;
 use std::fmt::Write;
+use std::os::fd::AsRawFd;
 
 use smoltcp::iface::{Config, Interface, SocketSet};
 use smoltcp::phy::{wait as phy_wait, Device, Medium};
