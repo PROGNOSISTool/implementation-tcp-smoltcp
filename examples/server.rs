@@ -79,7 +79,7 @@ fn main() {
     let tcp3_handle = sockets.add(tcp3_socket);
     let tcp4_handle = sockets.add(tcp4_socket);
 
-    let mut tcp_6970_active = false;
+    let mut tcp_4433_active = false;
     loop {
         let timestamp = Instant::now();
         iface.poll(timestamp, &mut device, &mut sockets);
@@ -117,18 +117,18 @@ fn main() {
             socket.close();
         }
 
-        // tcp:6970: echo with reverse
+        // tcp:4433: echo with reverse
         let socket = sockets.get_mut::<tcp::Socket>(tcp2_handle);
         if !socket.is_open() {
-            socket.listen(6970).unwrap()
+            socket.listen(4433).unwrap()
         }
 
-        if socket.is_active() && !tcp_6970_active {
-            debug!("tcp:6970 connected");
-        } else if !socket.is_active() && tcp_6970_active {
-            debug!("tcp:6970 disconnected");
+        if socket.is_active() && !tcp_4433_active {
+            debug!("tcp:4433 connected");
+        } else if !socket.is_active() && tcp_4433_active {
+            debug!("tcp:4433 disconnected");
         }
-        tcp_6970_active = socket.is_active();
+        tcp_4433_active = socket.is_active();
 
         if socket.may_recv() {
             let data = socket
@@ -136,7 +136,7 @@ fn main() {
                     let recvd_len = buffer.len();
                     let mut data = buffer.to_owned();
                     if !data.is_empty() {
-                        debug!("tcp:6970 recv data: {:?}", data);
+                        debug!("tcp:4433 recv data: {:?}", data);
                         data = data.split(|&b| b == b'\n').collect::<Vec<_>>().concat();
                         data.reverse();
                         data.extend(b"\n");
@@ -145,11 +145,11 @@ fn main() {
                 })
                 .unwrap();
             if socket.can_send() && !data.is_empty() {
-                debug!("tcp:6970 send data: {:?}", data);
+                debug!("tcp:4433 send data: {:?}", data);
                 socket.send_slice(&data[..]).unwrap();
             }
         } else if socket.may_send() {
-            debug!("tcp:6970 close");
+            debug!("tcp:4433 close");
             socket.close();
         }
 
