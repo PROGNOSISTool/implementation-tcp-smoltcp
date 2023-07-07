@@ -15,6 +15,6 @@ COPY --from=build \
 COPY ./entrypoint.sh ./entrypoint.sh
 RUN chmod ug+x ./entrypoint.sh
 
-RUN apt-get update && apt-get install -y iptables iproute2
+RUN apt-get update && apt-get install -y iptables iproute2 bridge-utils net-tools kmod dhcpcd5
 
 CMD ["./entrypoint.sh"]
