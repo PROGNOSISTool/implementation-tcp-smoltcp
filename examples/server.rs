@@ -37,12 +37,12 @@ fn main() {
     let mut iface = Interface::new(config, &mut device, Instant::now());
     iface.update_ip_addrs(|ip_addrs| {
         ip_addrs
-            .push(IpCidr::new(IpAddress::v4(172, 17, 0, 2), 16))
+            .push(IpCidr::new(IpAddress::v4(172, 18, 0, 3), 16))
             .unwrap();
     });
     iface
         .routes_mut()
-        .add_default_ipv4_route(Ipv4Address::new(172, 17, 0, 1))
+        .add_default_ipv4_route(Ipv4Address::new(172, 18, 0, 1))
         .unwrap();
 
     // Create sockets
