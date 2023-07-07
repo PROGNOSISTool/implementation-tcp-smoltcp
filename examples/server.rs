@@ -4,7 +4,7 @@ use log::debug;
 use std::fmt::Write;
 
 use smoltcp::iface::{Config, Interface, SocketSet};
-use smoltcp::phy::{wait as phy_wait, Medium};
+use smoltcp::phy::{wait as phy_wait, Device, Medium};
 use smoltcp::socket::{tcp, udp};
 use smoltcp::time::{Duration, Instant};
 use smoltcp::wire::{EthernetAddress, IpAddress, IpCidr, Ipv4Address};
