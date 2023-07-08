@@ -20,4 +20,7 @@ dhcpcd br0
 # iptables -t nat -A PREROUTING -p tcp --dport 6970 -j DNAT --to-destination 192.168.69.1:6970
 # iptables -t nat -A POSTROUTING -p tcp -d 172.17.0.2 --dport 6970 -j SNAT --to-source 172.17.0.2
 
-server --tap tap0
+ip=$(ip addr show eth0 | grep "inet\b" | awk '{print $2}' | cut -d/ -f1)
+gat=$(ip route | awk '/default/ { print $3 }')
+
+server --tap tap0 --ip $ip --gat $gat
