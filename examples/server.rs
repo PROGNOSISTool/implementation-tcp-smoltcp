@@ -16,9 +16,11 @@ fn main() {
     let (mut opts, mut free) = utils::create_options();
     utils::add_tuntap_options(&mut opts, &mut free);
     utils::add_middleware_options(&mut opts, &mut free);
+    utils::add_ip_options(&mut opts, &mut free);
 
     let mut matches = utils::parse_options(&opts, free);
     let device = utils::parse_tuntap_options(&mut matches);
+    let ips = utils::parse_ip_options(&mut matches);
     let fd = device.as_raw_fd();
     let mut device =
         utils::parse_middleware_options(&mut matches, device, /*loopback=*/ false);
@@ -37,12 +39,12 @@ fn main() {
     let mut iface = Interface::new(config, &mut device, Instant::now());
     iface.update_ip_addrs(|ip_addrs| {
         ip_addrs
-            .push(IpCidr::new(IpAddress::v4(172, 18, 0, 3), 16))
+            .push(IpCidr::new(smoltcp::wire::IpAddress::Ipv4(ips.0), 16))
             .unwrap();
     });
     iface
         .routes_mut()
-        .add_default_ipv4_route(Ipv4Address::new(172, 18, 0, 1))
+        .add_default_ipv4_route(ips.1)
         .unwrap();
 
     // Create sockets

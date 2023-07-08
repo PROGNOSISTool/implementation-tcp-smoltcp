@@ -5,6 +5,7 @@ use env_logger::Builder;
 use getopts::{Matches, Options};
 #[cfg(feature = "log")]
 use log::{trace, Level, LevelFilter};
+use smoltcp::wire::Ipv4Address;
 use std::env;
 use std::fs::File;
 use std::io::{self, Write};
@@ -95,6 +96,24 @@ pub fn add_tuntap_options(opts: &mut Options, _free: &mut [&str]) {
     opts.optopt("", "tun", "TUN interface to use", "tun0");
     opts.optopt("", "tap", "TAP interface to use", "tap0");
 }
+
+pub fn add_ip_options(opts: &mut Options, _free: &mut [&str]) {
+    opts.opt("", "ip", "IP of interface to use", "192.168.1.1", getopts::HasArg::Yes, getopts::Occur::Req);
+    opts.opt("", "gat", "gateway of interface to use", "192.168.1.100", getopts::HasArg::Yes, getopts::Occur::Req);
+}
+
+pub fn parse_ip_options(matches: &mut Matches) -> (Ipv4Address, Ipv4Address) {
+    let ip = matches.opt_str("ip");
+    let gat = matches.opt_str("gat");
+    match (ip, gat) {
+        (Some(ip), Some(gat)) => match (ip.parse(), gat.parse()) {
+            (Ok(ipv), Ok(gatv)) => (ipv, gatv),
+            _ => panic!("Invalid ip or gat specified"),
+        }
+        _ => panic!("You must specify --ip and --gat"),
+    }
+}
+
 
 #[cfg(feature = "phy-tuntap_interface")]
 pub fn parse_tuntap_options(matches: &mut Matches) -> TunTapInterface {
