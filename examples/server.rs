@@ -48,76 +48,20 @@ fn main() {
         .unwrap();
 
     // Create sockets
-    let udp_rx_buffer = udp::PacketBuffer::new(
-        vec![udp::PacketMetadata::EMPTY, udp::PacketMetadata::EMPTY],
-        vec![0; 65535],
-    );
-    let udp_tx_buffer = udp::PacketBuffer::new(
-        vec![udp::PacketMetadata::EMPTY, udp::PacketMetadata::EMPTY],
-        vec![0; 65535],
-    );
-    let udp_socket = udp::Socket::new(udp_rx_buffer, udp_tx_buffer);
+    let tcp_rx_buffer = tcp::SocketBuffer::new(vec![0; 64]);
+    let tcp_tx_buffer = tcp::SocketBuffer::new(vec![0; 128]);
+    let mut tcp_socket = tcp::Socket::new(tcp_rx_buffer, tcp_tx_buffer);
 
-    let tcp1_rx_buffer = tcp::SocketBuffer::new(vec![0; 64]);
-    let tcp1_tx_buffer = tcp::SocketBuffer::new(vec![0; 128]);
-    let tcp1_socket = tcp::Socket::new(tcp1_rx_buffer, tcp1_tx_buffer);
-
-    let tcp2_rx_buffer = tcp::SocketBuffer::new(vec![0; 64]);
-    let tcp2_tx_buffer = tcp::SocketBuffer::new(vec![0; 128]);
-    let tcp2_socket = tcp::Socket::new(tcp2_rx_buffer, tcp2_tx_buffer);
-
-    let tcp3_rx_buffer = tcp::SocketBuffer::new(vec![0; 65535]);
-    let tcp3_tx_buffer = tcp::SocketBuffer::new(vec![0; 65535]);
-    let tcp3_socket = tcp::Socket::new(tcp3_rx_buffer, tcp3_tx_buffer);
-
-    let tcp4_rx_buffer = tcp::SocketBuffer::new(vec![0; 65535]);
-    let tcp4_tx_buffer = tcp::SocketBuffer::new(vec![0; 65535]);
-    let tcp4_socket = tcp::Socket::new(tcp4_rx_buffer, tcp4_tx_buffer);
+    // TCP_NODELAY
+    tcp_socket.set_nagle_enabled(false);
 
     let mut sockets = SocketSet::new(vec![]);
-    let udp_handle = sockets.add(udp_socket);
-    let tcp1_handle = sockets.add(tcp1_socket);
-    let tcp2_handle = sockets.add(tcp2_socket);
-    let tcp3_handle = sockets.add(tcp3_socket);
-    let tcp4_handle = sockets.add(tcp4_socket);
+    let tcp2_handle = sockets.add(tcp_socket);
 
     let mut tcp_44344_active = false;
     loop {
         let timestamp = Instant::now();
         iface.poll(timestamp, &mut device, &mut sockets);
-
-        // udp:6969: respond "hello"
-        let socket = sockets.get_mut::<udp::Socket>(udp_handle);
-        if !socket.is_open() {
-            socket.bind(6969).unwrap()
-        }
-
-        let client = match socket.recv() {
-            Ok((data, endpoint)) => {
-                debug!("udp:6969 recv data: {:?} from {}", data, endpoint);
-                let mut data = data.to_vec();
-                data.reverse();
-                Some((endpoint, data))
-            }
-            Err(_) => None,
-        };
-        if let Some((endpoint, data)) = client {
-            debug!("udp:6969 send data: {:?} to {}", data, endpoint,);
-            socket.send_slice(&data, endpoint).unwrap();
-        }
-
-        // tcp:6969: respond "hello"
-        let socket = sockets.get_mut::<tcp::Socket>(tcp1_handle);
-        if !socket.is_open() {
-            socket.listen(6969).unwrap();
-        }
-
-        if socket.can_send() {
-            debug!("tcp:6969 send greeting");
-            writeln!(socket, "hello").unwrap();
-            debug!("tcp:6969 close");
-            socket.close();
-        }
 
         // tcp:44344: echo with reverse
         let socket = sockets.get_mut::<tcp::Socket>(tcp2_handle);
@@ -153,47 +97,6 @@ fn main() {
         } else if socket.may_send() {
             debug!("tcp:44344 close");
             socket.close();
-        }
-
-        // tcp:6971: sinkhole
-        let socket = sockets.get_mut::<tcp::Socket>(tcp3_handle);
-        if !socket.is_open() {
-            socket.listen(6971).unwrap();
-            socket.set_keep_alive(Some(Duration::from_millis(1000)));
-            socket.set_timeout(Some(Duration::from_millis(2000)));
-        }
-
-        if socket.may_recv() {
-            socket
-                .recv(|buffer| {
-                    if !buffer.is_empty() {
-                        debug!("tcp:6971 recv {:?} octets", buffer.len());
-                    }
-                    (buffer.len(), ())
-                })
-                .unwrap();
-        } else if socket.may_send() {
-            socket.close();
-        }
-
-        // tcp:6972: fountain
-        let socket = sockets.get_mut::<tcp::Socket>(tcp4_handle);
-        if !socket.is_open() {
-            socket.listen(6972).unwrap()
-        }
-
-        if socket.may_send() {
-            socket
-                .send(|data| {
-                    if !data.is_empty() {
-                        debug!("tcp:6972 send {:?} octets", data.len());
-                        for (i, b) in data.iter_mut().enumerate() {
-                            *b = (i % 256) as u8;
-                        }
-                    }
-                    (data.len(), ())
-                })
-                .unwrap();
         }
 
         phy_wait(fd, iface.poll_delay(timestamp, &sockets)).expect("wait error");

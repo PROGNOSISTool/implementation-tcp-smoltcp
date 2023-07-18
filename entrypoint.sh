@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+modprobe bridge
+modprobe br_netfilter
+
 ip tuntap add name tap0 mode tap user root
 brctl addbr br0
 brctl addif br0 tap0
