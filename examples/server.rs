@@ -83,9 +83,7 @@ fn main() {
                     let mut data = buffer.to_owned();
                     if !data.is_empty() {
                         debug!("tcp:44344 recv data: {:?}", data);
-                        data = data.split(|&b| b == b'\n').collect::<Vec<_>>().concat();
                         data.reverse();
-                        data.extend(b"\n");
                     }
                     (recvd_len, data)
                 })
